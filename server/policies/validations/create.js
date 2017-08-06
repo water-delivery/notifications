@@ -1,9 +1,9 @@
 module.exports = (req, res, next) => {
   console.log('Create validation is running');
-  const { registrationToken, userId } = req.body || {};
-  if (!registrationToken) {
+  const { token, userId } = req.body || {};
+  if (!token) {
     return res.status(400).send({
-      message: 'Required field `registrationToken` is not sent.'
+      message: 'Required field `token` is not sent.'
     });
   }
 

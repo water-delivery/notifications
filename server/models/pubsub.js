@@ -23,6 +23,8 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 'loggedIn'
     },
   }, {
+    plural: 'pubsub',
+    freezeTableName: true,
     hooks: {}
   });
   return registrationToken;
