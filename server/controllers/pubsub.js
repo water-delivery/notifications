@@ -32,7 +32,7 @@ module.exports = {
 
   update: (req, res) => {
     console.log('Updating subscription!!');
-    const { status, deviceId, userType, userId } = req.body || {};
+    const { status, deviceId, userType, userId, token } = req.body || {};
     if (!status || !TOKEN_STATES.includes(status)) {
       return res.badRequest({
         message: `state should be one of these ${TOKEN_STATES.toString()}`
@@ -42,7 +42,7 @@ module.exports = {
     // TODO: change this to upsert if possible
     async.waterfall([
       // Find or create
-      (cb) => {
+      (cb) =>
         PubSub.findOrCreate({
           where: {
             deviceId
@@ -51,11 +51,11 @@ module.exports = {
             userType,
             deviceId,
             status,
+            token,
             userId
           }
         })
-        .spread((record, created) => cb(null, created));
-      },
+        .spread((record, created) => cb(null, created)),
       // update record if not created
       (created, cb) => {
         if (created) return cb();
@@ -67,7 +67,7 @@ module.exports = {
           plain: true
         })
         .then(([, affectedRows]) =>
-          cb({
+          cb(null, {
             message: `Updated ${affectedRows} records`
           })
         )

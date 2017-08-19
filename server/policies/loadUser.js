@@ -6,6 +6,7 @@ const { getToken } = require('../utils');
 const urls = require('../config').urls;
 
 module.exports = (req, res, next) => {
+  console.log('loadUser policy is running');
   req.options = req.options || {};
 
   // start with setting user to UNAUTHENTICATED

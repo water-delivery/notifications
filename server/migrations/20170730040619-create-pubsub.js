@@ -1,6 +1,6 @@
 module.exports = {
-  up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('pubsub', {
+  up: (queryInterface, Sequelize) =>
+    queryInterface.createTable('pubsub', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -18,7 +18,6 @@ module.exports = {
         values: ['seller', 'admin', 'user'],
       },
       token: {
-        unique: true,
         type: Sequelize.STRING,
         allowNull: false,
       },
@@ -41,9 +40,8 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE
       }
-    });
-  },
-  down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable('pubsub');
-  }
+    }),
+
+  down: (queryInterface) =>
+    queryInterface.dropTable('pubsub')
 };

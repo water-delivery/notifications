@@ -11,7 +11,6 @@ module.exports = (sequelize, DataTypes) => {
       values: ['seller', 'admin', 'user'],
     },
     token: {
-      unique: true,
       type: DataTypes.STRING,
       allowNull: false,
     },
