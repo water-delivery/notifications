@@ -13,6 +13,10 @@ module.exports = {
       userId: {
         type: Sequelize.INTEGER,
       },
+      userType: {
+        type: Sequelize.ENUM,
+        values: ['seller', 'admin', 'user'],
+      },
       token: {
         unique: true,
         type: Sequelize.STRING,
@@ -24,7 +28,7 @@ module.exports = {
       firstName: {
         type: Sequelize.STRING,
       },
-      state: {
+      status: {
         type: Sequelize.ENUM,
         values: ['loggedIn', 'loggedOut', 'anon'],
         defaultValue: 'anon'

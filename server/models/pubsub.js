@@ -4,7 +4,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
     },
     userId: {
-      type: DataTypes.INTEGER
+      type: DataTypes.INTEGER,
+    },
+    userType: {
+      type: DataTypes.ENUM,
+      values: ['seller', 'admin', 'user'],
     },
     token: {
       unique: true,
@@ -17,13 +21,12 @@ module.exports = (sequelize, DataTypes) => {
     firstName: {
       type: DataTypes.STRING,
     },
-    state: {
+    status: {
       type: DataTypes.ENUM,
       values: ['loggedIn', 'loggedOut', 'anon'],
       defaultValue: 'loggedIn'
     },
   }, {
-    plural: 'pubsub',
     freezeTableName: true,
     hooks: {}
   });

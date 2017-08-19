@@ -12,3 +12,10 @@ CREATE TABLE public.pubsub (
   "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL
 );
 CREATE UNIQUE INDEX pubsub_token_key ON pubsub USING BTREE (token);
+
+/*
+To support both seller and user
+ */
+ALTER TABLE pubsub add column "userType" TEXT;
+update pubsub set "userType" = 'user' WHERE "userId" IS NOT NULL;
+ALTER TABLE pubsub RENAME COLUMN state to "status";

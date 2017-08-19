@@ -3,9 +3,11 @@ const {
   TOKEN_STATES,
 } = require('../constants');
 const { fcm } = require('../services');
+const utils = require('../utils');
 
 module.exports = {
   create: (req, res) => {
+    console.log('Creating subscription!!');
     const { deviceId, token, userId, state, contact } = req.body || {};
 
     PubSub.findOrCreate({
@@ -28,35 +30,40 @@ module.exports = {
   },
 
   update: (req, res) => {
-    const { state, contact, userId, deviceId } = req.body || {};
-    if (!state || !TOKEN_STATES.includes(state)) {
+    console.log('Updating subscription!!');
+    const { status, deviceId } = req.body || {};
+    if (!status || !TOKEN_STATES.includes(status)) {
       return res.badRequest({
-        message: `state should be one of these${TOKEN_STATES.toString()}`
+        message: `state should be one of these ${TOKEN_STATES.toString()}`
       });
     }
+
+    // TODO: change this to upsert if possible
     return PubSub.update({
-      state
+      status
     }, {
-      where: { deviceId, contact, userId },
+      where: { deviceId },
       returning: true,
       plain: true
     })
-    .then(res.ok)
+    .then(([, affectedRows]) => {
+      return res.ok({
+        message: `Updated ${affectedRows} records`
+      });
+    })
+    // .then(res.ok)
     .catch(res.negotitate);
   },
 
   sendToDevice: (req, res) => {
-    const payload = req.body.payload || {
-      notification: {
-        title: '$GOOG up 1.43% on the day',
-        body: '$GOOG gained 11.80 points to close at 835.67, up 1.43% on the day.'
-      },
-      data: {
-        stock: 'GOOG',
-        open: 829.62,
-        close: '635.67'
-      }
-    };
+    const action = req.body.action || 'orderPlaced';
+    if (!action || !utils[action]) {
+      return res.badRequest({
+        message: 'Required field action not sent or invalid'
+      });
+    }
+    const payload = utils[action]();
+
     const { userId, deviceId } = req.body || {};
     if (!userId || !deviceId) {
       return res.badRequest({
@@ -74,8 +81,10 @@ module.exports = {
       return fcm.sendToDevice({
         registrationToken: record.token,
         payload
-      });
+      })
+      .then(res.ok)
+      .catch(res.negotitate);
     })
-    .catch();
+    .catch(res.negotitate);
   },
 };
