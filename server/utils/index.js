@@ -35,7 +35,18 @@ module.exports = {
     return `Hello, ${otp}${filler}`;
   },
 
-  orderPlaced: () => {
+  orderPlaced: (meta = {}) => {
+    const message = meta.address ? `from ${meta.address}` : '';
+    const payload = {
+      notification: {
+        title: 'New order',
+        body: `You have got new order ${message}.`
+      },
+    };
+    return payload;
+  },
+
+  orderConfirmation: () => {
     const payload = {
       notification: {
         title: 'Order confirmation',

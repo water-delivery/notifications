@@ -1,3 +1,4 @@
+const async = require('async');
 const PubSub = require('../models').pubsub;
 const {
   TOKEN_STATES,
@@ -31,7 +32,7 @@ module.exports = {
 
   update: (req, res) => {
     console.log('Updating subscription!!');
-    const { status, deviceId } = req.body || {};
+    const { status, deviceId, userType, userId } = req.body || {};
     if (!status || !TOKEN_STATES.includes(status)) {
       return res.badRequest({
         message: `state should be one of these ${TOKEN_STATES.toString()}`
@@ -39,42 +40,71 @@ module.exports = {
     }
 
     // TODO: change this to upsert if possible
-    return PubSub.update({
-      status
-    }, {
-      where: { deviceId },
-      returning: true,
-      plain: true
-    })
-    .then(([, affectedRows]) => {
-      return res.ok({
-        message: `Updated ${affectedRows} records`
-      });
-    })
-    // .then(res.ok)
-    .catch(res.negotitate);
+    async.waterfall([
+      // Find or create
+      (cb) => {
+        PubSub.findOrCreate({
+          where: {
+            deviceId
+          },
+          defaults: {
+            userType,
+            deviceId,
+            status,
+            userId
+          }
+        })
+        .spread((record, created) => cb(null, created));
+      },
+      // update record if not created
+      (created, cb) => {
+        if (created) return cb();
+        return PubSub.update({
+          status
+        }, {
+          where: { deviceId },
+          returning: true,
+          plain: true
+        })
+        .then(([, affectedRows]) =>
+          cb({
+            message: `Updated ${affectedRows} records`
+          })
+        )
+        .catch(cb);
+      }
+    ], (err, result) => {
+      if (err) return res.negotitate(err);
+      return res.ok(result);
+    });
   },
 
   sendToDevice: (req, res) => {
     const action = req.body.action || 'orderPlaced';
+    const { meta } = req.body;
     if (!action || !utils[action]) {
       return res.badRequest({
         message: 'Required field action not sent or invalid'
       });
     }
-    const payload = utils[action]();
+    const payload = utils[action](meta);
 
-    const { userId, deviceId } = req.body || {};
+    const { userId, userType, deviceId } = req.body || {};
     if (!userId || !deviceId) {
       return res.badRequest({
         message: 'Required fields `userId` or `deviceId` not sent.'
       });
     }
+    let where = {};
+    if (userId && userType) where = { userId, userType };
+    if (deviceId) where = { deviceId };
+    if (Object.keys(where).length < 1) {
+      return res.badRequest({
+        message: 'userId or deviceId is needed to send notification'
+      });
+    }
     return PubSub.findOne({
-      where: {
-        deviceId,
-        userId
-      }
+      where
     })
     .then(record => {
       if (!record) return res.ok({ message: 'Did not subscribe for notifications' });
