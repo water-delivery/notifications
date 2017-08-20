@@ -31,8 +31,8 @@ module.exports = {
   },
 
   update: (req, res) => {
-    console.log('Updating subscription!!');
-    const { status, deviceId, userType, userId, token } = req.body || {};
+    const { status, deviceId, userType, userId, token, contact, firstName } = req.body || {};
+    console.log('Updating subscription!!', status, deviceId, userType, userId, token);
     if (!status || !TOKEN_STATES.includes(status)) {
       return res.badRequest({
         message: `state should be one of these ${TOKEN_STATES.toString()}`
@@ -52,7 +52,8 @@ module.exports = {
             deviceId,
             status,
             token,
-            userId
+            userId,
+            contact
           }
         })
         .spread((record, created) => cb(null, created)),
@@ -60,7 +61,12 @@ module.exports = {
       (created, cb) => {
         if (created) return cb();
         return PubSub.update({
-          status
+          status,
+          token,
+          userId,
+          contact,
+          userType,
+          firstName
         }, {
           where: { deviceId },
           returning: true,
@@ -81,6 +87,7 @@ module.exports = {
 
   sendToDevice: (req, res) => {
     const action = req.body.action || 'orderPlaced';
+    console.log(req.body);
     const { meta } = req.body;
     if (!action || !utils[action]) {
       return res.badRequest({
@@ -90,11 +97,6 @@ module.exports = {
     const payload = utils[action](meta);
 
     const { userId, userType, deviceId } = req.body || {};
-    if (!userId || !deviceId) {
-      return res.badRequest({
-        message: 'Required fields `userId` or `deviceId` not sent.'
-      });
-    }
     let where = {};
     if (userId && userType) where = { userId, userType };
     if (deviceId) where = { deviceId };
@@ -103,13 +105,15 @@ module.exports = {
         message: 'userId or deviceId is needed to send notification'
       });
     }
-    return PubSub.findOne({
-      where
+    return PubSub.findAll({
+      where,
+      plain: true
     })
-    .then(record => {
-      if (!record) return res.ok({ message: 'Did not subscribe for notifications' });
+    .then(records => {
+      if (!records) return res.badRequest({ message: 'Did not subscribe for notifications' });
+      const tokens = records.map(record => record.token);
       return fcm.sendToDevice({
-        registrationToken: record.token,
+        registrationToken: tokens,
         payload
       })
       .then(res.ok)
