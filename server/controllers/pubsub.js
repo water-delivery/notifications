@@ -106,12 +106,11 @@ module.exports = {
       });
     }
     return PubSub.findAll({
-      where,
-      plain: true
+      where
     })
-    .then(records => {
-      if (!records) return res.badRequest({ message: 'Did not subscribe for notifications' });
-      const tokens = records.map(record => record.token);
+    .then(rows => {
+      if (!rows) return res.badRequest({ message: 'Did not subscribe for notifications' });
+      const tokens = rows.map(record => record.token);
       return fcm.sendToDevice({
         registrationToken: tokens,
         payload
