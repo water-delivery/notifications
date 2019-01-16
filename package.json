@@ -1,11 +1,12 @@
 {
-  "name": "ProjectX",
+  "name": "notification-service",
   "version": "1.0.0",
   "description": "Notifications for for our delivery app",
   "main": "server.js",
   "author": "Phanindra <phanindra.nitw@gmail.com>",
   "license": "MIT",
   "scripts": {
+    "start": "node ./bin/server.js",
     "start:dev": "nodemon ./bin/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

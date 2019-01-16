@@ -31,7 +31,7 @@ module.exports = (req, res, next) => {
 
   const authServiceReqOptions = {
     method: 'GET',
-    url: `${urls.api}/auth/v1/user/me`,
+    url: `${urls.AUTH_SERVICE_HOST}/auth/v1/user/me`,
     headers: { Authorization: `Bearer ${accessToken}` },
     json: true
   };
